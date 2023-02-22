@@ -45,9 +45,21 @@ if __name__ == '__main__':
     print(f"Estimated cost = {board.manhattan}")
 
     print("\n##### IDA* - MANHATTAN #####")
-    ida_solver = IDAStarSolver(board, heuristic='manhattan')
+    heuristic = 'manhattan'
+    board.set_f(heuristic)
+    ida_solver = IDAStarSolver(board, heuristic)
     ida_res = run_solver(ida_solver)
 
     df = pd.DataFrame(columns=ida_res.keys())
     df.loc[seed] = ida_res
-    df.to_csv(os.path.join(fld, f'ida_{seed}.csv'))
+    df.to_csv(os.path.join(fld, f'ida_{seed}_{heuristic}.csv'))
+
+    print("\n##### IDA* - HAMMING #####")
+    heuristic = 'hamming'
+    board.set_f(heuristic)
+    ida_solver = IDAStarSolver(board, heuristic)
+    ida_res = run_solver(ida_solver)
+
+    df = pd.DataFrame(columns=ida_res.keys())
+    df.loc[seed] = ida_res
+    df.to_csv(os.path.join(fld, f'ida_{seed}_{heuristic}.csv'))

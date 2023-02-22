@@ -14,11 +14,16 @@ class Board():
         self.zero_row = blank_cell[0][0]
         self.zero_column = blank_cell[1][0]
 
+        self.g = 0
+        self.manhattan = None
+        self.hamming = None
+        self.f = None
+
+    def set_f(self, heuristic='manhattan'):
         if heuristic == 'manhattan':
             self.manhattan = self._manhattan()
         elif heuristic == 'hamming':
             self.hamming = self._hamming()
-        self.g = 0
         self.f = getattr(self, heuristic)
 
     def _find_blank(self):
