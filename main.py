@@ -1,6 +1,6 @@
 import os.path
 import sys
-import time
+from time import time
 
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -13,18 +13,17 @@ from NPuzzle import Board
 
 ## TODO - need to refactor later.. this is from Saar
 def run_solver(solver):
-    start = time.time()
+    s_time = time()
     actual_cost = solver.solve()
-    end = time.time()
-    elapsed_time = end - start
-    sr = pd.Series(solver.history.values(), index=solver.history.keys())
-    desc = sr.describe()
+    e_time = time()
+    nodes_counts = pd.Series(solver.history.values(), index=solver.history.keys())
+    desc = nodes_counts.describe()
     res_dict = {
         'Actual Cost': actual_cost,
-        'Elapsed Time': elapsed_time,
+        'Elapsed Time': round(e_time - s_time, 6),
         'Expanded Nodes': solver.nodes_expanded,
-        'Duplicate Visits': sr[(sr > 1)].sum(),
-        **{f'{f_n} Visits'.title(): val for f_n, val in desc.items()}
+        'Duplicate Visits': nodes_counts[nodes_counts > 1].sum(),
+        **{f'{percentile} Visits'.title(): val for percentile, val in desc.items()}
     }
     for k, v in res_dict.items():
         print(k, v, sep=' = ')
@@ -42,11 +41,11 @@ if __name__ == '__main__':
 
     board = Board(size=3)
     print(f'Board is: {board}')
-    print(f"Estimated cost = {board.manhattan}")
 
     print("\n##### IDA* - MANHATTAN #####")
     heuristic = 'manhattan'
     board.set_f(heuristic)
+    print(f"Estimated cost = {heuristic} of initial board: {getattr(board, heuristic)}")
     ida_solver = IDAStarSolver(board, heuristic)
     ida_res = run_solver(ida_solver)
 
@@ -57,6 +56,7 @@ if __name__ == '__main__':
     print("\n##### IDA* - HAMMING #####")
     heuristic = 'hamming'
     board.set_f(heuristic)
+    print(f"Estimated cost = {heuristic} of initial board: {getattr(board, heuristic)}")
     ida_solver = IDAStarSolver(board, heuristic)
     ida_res = run_solver(ida_solver)
 

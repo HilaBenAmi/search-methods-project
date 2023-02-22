@@ -2,6 +2,7 @@ import numpy as np
 
 max_int = np.iinfo(np.int64).max
 
+
 class IDAStarSolver:
     def __init__(self, board, heuristic='manhattan'):
         self.solution = []
