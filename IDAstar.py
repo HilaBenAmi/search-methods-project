@@ -1,5 +1,6 @@
-from sys import maxsize
+import numpy as np
 
+max_int = np.iinfo(np.int64).max
 
 class IDAStarSolver:
     def __init__(self, board, heuristic='manhattan'):
@@ -16,7 +17,7 @@ class IDAStarSolver:
             t = self.search(self.initial_board, threshold)
             if t == 'FOUND':
                 return threshold
-            if t == maxsize:
+            if t == max_int:
                 return 'NOT_FOUND'
             threshold = t
 
@@ -29,8 +30,9 @@ class IDAStarSolver:
         if getattr(board, self.heuristic) == 0:
             return 'FOUND'
 
-        minimum = maxsize
-        for next_board in board.get_possible_next_board():
+        minimum = max_int
+        next_possible_board_list = board.get_possible_next_board(self.heuristic)
+        for next_board in next_possible_board_list:
             t = self.search(next_board, threshold)
             self.nodes_expanded += 1
             if t == 'FOUND':
@@ -41,11 +43,8 @@ class IDAStarSolver:
         return minimum
 
     def update_history(self, board):
-        try:
-            board_str = str(board)
-            if board_str not in self.history:
-                self.history[board_str] = 1
-            else:
-                self.history[board_str] += 1
-        except:
-            pass
+        board_str = str(board)
+        if board_str not in self.history:
+            self.history[board_str] = 1
+        else:
+            self.history[board_str] += 1

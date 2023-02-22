@@ -3,21 +3,23 @@ import numpy as np
 
 
 class Board():
-    def __init__(self, size=3):
+    def __init__(self, size=3, heuristic='manhattan'):
         self.dim = size
         self.tiles = self.generate_board(size)
         self.goal_board = self.generate_board(size, is_default_goal=True)
-        while not self.is_solvable():  ## TODO do we need this? and from where they brought conditions?
+        while not self.is_solvable():
             self.tiles = self.generate_board(size)
 
         blank_cell = self._find_blank()
         self.zero_row = blank_cell[0][0]
         self.zero_column = blank_cell[1][0]
 
-        self.manhattan = self._manhattan()
-        self.hamming = self._hamming()
+        if heuristic == 'manhattan':
+            self.manhattan = self._manhattan()
+        elif heuristic == 'hamming':
+            self.hamming = self._hamming()
         self.g = 0
-        self.f = self.manhattan
+        self.f = getattr(self, heuristic)
 
     def _find_blank(self):
         return np.where(self.tiles == 0)
@@ -37,9 +39,6 @@ class Board():
         self.manhattan += abs(next_loc[0] - goal_row) + abs(next_loc[1] - goal_col)
 
     def _hamming(self):
-        """
-        TODO add documentation
-        """
         res = 0
         for i in range(self.dim):
             for j in range(self.dim):
@@ -55,49 +54,51 @@ class Board():
         elif goal_row == next_loc[0] and goal_col == next_loc[1]:  # The change we made moved a non-zero tile TO its goal place
             self.hamming -= 1
 
-    def swap_with_zero(self, prev_row, prev_col):
+    def swap_with_zero(self, next_zero_row, next_zero_col, heuristic='manhattan'):
         """
             Swaps tile at i0, j0 with the zero tile
             update manhattan and hamming
         """
-        self._update_manhattan(prev_loc=(prev_row, prev_col), next_loc=(self.zero_row, self.zero_column))
-        self._update_hamming(prev_loc=(prev_row, prev_col), next_loc=(self.zero_row, self.zero_column))
+        if heuristic == 'manhattan':
+            self._update_manhattan(prev_loc=(next_zero_row, next_zero_col), next_loc=(self.zero_row, self.zero_column))
+        elif heuristic == 'hamming':
+            self._update_hamming(prev_loc=(next_zero_row, next_zero_col), next_loc=(self.zero_row, self.zero_column))
 
         # Swap tiles
-        self.tiles[prev_row][prev_col] = self.tiles[self.zero_row, self.zero_column]
-        self.tiles[self.zero_row, self.zero_column] = self.tiles[prev_row, prev_col]
+        self.tiles[self.zero_row, self.zero_column] = self.tiles[next_zero_row, next_zero_col]
+        self.tiles[next_zero_row][next_zero_col] = 0
 
         # Update zero row and column
-        self.zero_row, self.zero_column = prev_row, prev_col
+        self.zero_row, self.zero_column = next_zero_row, next_zero_col
 
-    def _create_next_board(self, next_row, next_col):
+    def _create_next_board(self, next_row, next_col, heuristic='manhattan'):
         next_board = deepcopy(self)
-        next_board.swap_with_zero(next_row, next_col)
-        next_board.g = self.g
+        next_board.swap_with_zero(next_row, next_col, heuristic)
+        next_board.g = self.g + 1
         next_board.eval_f = next_board.g + next_board.manhattan
         return next_board
 
-    def get_possible_next_board(self):
+    def get_possible_next_board(self, heuristic='manhattan'):
         next_board_list = []
 
         # The zero tile can be swapped with tile above
         if self.zero_row > 0:
-            next_board = self._create_next_board(self.zero_row - 1, self.zero_column)
+            next_board = self._create_next_board(self.zero_row - 1, self.zero_column, heuristic)
             next_board_list.append(next_board)
 
         # The zero tile can be swapped with tile below
         if self.zero_row < self.dim - 1:
-            next_board = self._create_next_board(self.zero_row + 1, self.zero_column)
+            next_board = self._create_next_board(self.zero_row + 1, self.zero_column, heuristic)
             next_board_list.append(next_board)
 
         # The zero tile can be swapped with the tile to its left
         if self.zero_column > 0:
-            next_board = self._create_next_board(self.zero_row, self.zero_column - 1)
+            next_board = self._create_next_board(self.zero_row, self.zero_column - 1, heuristic)
             next_board_list.append(next_board)
 
         # The zero tile can be swapped with the tile to its right
         if self.zero_column < self.dim - 1:
-            next_board = self._create_next_board(self.zero_row, self.zero_column + 1)
+            next_board = self._create_next_board(self.zero_row, self.zero_column + 1, heuristic)
             next_board_list.append(next_board)
 
         return next_board_list
@@ -106,7 +107,6 @@ class Board():
         h = getattr(self, heuristic)
         return self.g + h
 
-    ## TODO - do we know this?
     def is_solvable(self):
         """
         Checks if the board is solvable
