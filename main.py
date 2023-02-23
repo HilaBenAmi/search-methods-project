@@ -3,11 +3,12 @@ import sys
 from time import time
 
 import matplotlib.pyplot as plt
-import seaborn as sns
+# import seaborn as sns
 import numpy as np
 import pandas as pd
 
 from IDAstar import IDAStarSolver
+from AStar import AStarSolver
 from NPuzzle import Board
 
 
@@ -31,9 +32,16 @@ def run_solver(solver):
     return res_dict
 
 
+def run_solver_and_save_results(solver, board, seed, heuristic, dir_path, solver_name='Astar'):
+    board.set_f(heuristic)
+    print(f"Estimated cost = {heuristic} of initial board: {getattr(board, heuristic)}")
+    res = run_solver(solver)
+    df = pd.DataFrame(columns=res.keys())
+    df.loc[seed] = res
+    df.to_csv(os.path.join(dir_path, f'{solver_name}_{seed}_{heuristic}.csv'))
+
 
 if __name__ == '__main__':
-    # _, seed, fld = sys.argv
     seed = 1
     fld = 'outputs'
     seed = int(seed)
@@ -42,24 +50,26 @@ if __name__ == '__main__':
     board = Board(size=3)
     print(f'Board is: {board}')
 
+    dir_path = os.path.join(fld)
+    if not os.path.exists(dir_path):
+        os.mkdir(dir_path)
+
+    print("\n##### A* - MANHATTAN #####")
+    heuristic = 'manhattan'
+    a_solver_manhattan = AStarSolver(board, heuristic)
+    run_solver_and_save_results(a_solver_manhattan, board, seed, heuristic, dir_path, solver_name='Astar')
+
+    print("\n##### A* - HAMMING #####")
+    heuristic = 'hamming'
+    a_solver_hamming = AStarSolver(board, heuristic)
+    run_solver_and_save_results(a_solver_hamming, board, seed, heuristic, dir_path, solver_name='Astar')
+
     print("\n##### IDA* - MANHATTAN #####")
     heuristic = 'manhattan'
-    board.set_f(heuristic)
-    print(f"Estimated cost = {heuristic} of initial board: {getattr(board, heuristic)}")
-    ida_solver = IDAStarSolver(board, heuristic)
-    ida_res = run_solver(ida_solver)
-
-    df = pd.DataFrame(columns=ida_res.keys())
-    df.loc[seed] = ida_res
-    df.to_csv(os.path.join(fld, f'ida_{seed}_{heuristic}.csv'))
+    ida_solver_manhattan = IDAStarSolver(board, heuristic)
+    run_solver_and_save_results(ida_solver_manhattan, board, seed, heuristic, dir_path, solver_name='IDAstar')
 
     print("\n##### IDA* - HAMMING #####")
     heuristic = 'hamming'
-    board.set_f(heuristic)
-    print(f"Estimated cost = {heuristic} of initial board: {getattr(board, heuristic)}")
-    ida_solver = IDAStarSolver(board, heuristic)
-    ida_res = run_solver(ida_solver)
-
-    df = pd.DataFrame(columns=ida_res.keys())
-    df.loc[seed] = ida_res
-    df.to_csv(os.path.join(fld, f'ida_{seed}_{heuristic}.csv'))
+    ida_solver_hamming = IDAStarSolver(board, heuristic)
+    run_solver_and_save_results(ida_solver_hamming, board, seed, heuristic, dir_path, solver_name='IDAstar')

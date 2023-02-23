@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 
 from IDAstar import IDAStarSolver
+
 from NPuzzle import Board
 from RBFS import RBFSSolver
 
@@ -54,10 +55,10 @@ if __name__ == '__main__':
 
         print("\n##### IDA* - MANHATTAN #####")
         ida_solver = IDAStarSolver(sample, heuristic='manhattan')
-        ida_res = run_solver(ida_solver)
+        res = run_solver(ida_solver)
 
-        df = pd.DataFrame(columns=ida_res.keys())
-        df.loc[seed] = ida_res
+        df = pd.DataFrame(columns=res.keys())
+        df.loc[seed] = res
         df.to_csv(os.path.join(fld, f'ida_{seed}.csv'))
 
         axs[1].plot(ida_solver.history.keys(), ida_solver.history.values())
@@ -66,10 +67,10 @@ if __name__ == '__main__':
             which='both',
             bottom=False,
             labelbottom=False)
-        axs[1].set_xlabel(f"{int(ida_res['Count Visits'])} unique states", fontsize=16)
+        axs[1].set_xlabel(f"{int(res['Count Visits'])} unique states", fontsize=16)
         axs[1].set_ylabel('Visits Count', fontsize=16)
         axs[1].set_title('IDA*', fontsize=20)
-        axs[1].axhline(ida_res['Mean Visits'], color='r', linestyle=':')
+        axs[1].axhline(res['Mean Visits'], color='r', linestyle=':')
 
         print("\n##### RBFS - MANHATTAN #####")
         rbfs_solver = RBFSSolver(sample, heuristic='manhattan')
