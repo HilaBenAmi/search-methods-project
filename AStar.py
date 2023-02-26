@@ -15,6 +15,7 @@ class AStarSolver:
 
         while frontier:
             f, board = heapq.heappop(frontier)
+            self.solution.append(board)
             if getattr(board, self.heuristic) == 0:
                 self.solution.append(board)
                 return f
