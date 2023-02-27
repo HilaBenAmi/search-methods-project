@@ -1,4 +1,7 @@
 import heapq
+from time import time
+
+MAX_ELAPSED_TIME = 60*10
 
 
 class AStarSolver:
@@ -8,6 +11,7 @@ class AStarSolver:
         self.heuristic = heuristic
         self.nodes_expanded = 1
         self.history = {}
+        self.s_time = time()
 
     def solve(self):
         frontier = []
@@ -19,6 +23,9 @@ class AStarSolver:
             if getattr(board, self.heuristic) == 0:
                 self.solution.append(board)
                 return f
+
+            if time()-self.s_time > MAX_ELAPSED_TIME:
+                return 'NOT_FOUND'
 
             if str(board) not in self.history:
                 self.history[str(board)] = f

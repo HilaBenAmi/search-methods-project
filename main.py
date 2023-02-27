@@ -15,6 +15,8 @@ def run_solver(solver, experiment_name):
     s_time = time()
     actual_cost = solver.solve()
     e_time = time()
+    if actual_cost == 'NOT_FOUND':
+        print(f"Board was not solved after {round(e_time - s_time, 6)} sec")
     nodes_counts = pd.Series(solver.history.values(), index=solver.history.keys())
     desc = nodes_counts.describe()
     res_dict = {
@@ -42,14 +44,25 @@ def run_solver_and_save_results(solver, board, seed, heuristic, dir_path, solver
     return df
 
 
-def evaluate_results(file_name):
-    ts = time()
-    df = pd.read_csv(f'./outputs/{file_name}.csv', index_col=0)
+def save_results_stats(all_res_df, found_res=True):
+    if found_res:
+        df = all_res_df[all_res_df['actual_cost'] != 'NOT_FOUND']
+    else:
+        df = all_res_df[all_res_df['actual_cost'] == 'NOT_FOUND']
     gb = df.groupby('experiment_name')
     mean_per_exp = gb.mean().add_prefix('mean_')
     std_per_exp = gb.std().add_prefix('std_')
     stat_res = pd.concat([mean_per_exp, std_per_exp], axis=1)
-    stat_res.to_csv(f'stat_results_{ts}.csv')
+    stat_res.to_csv(f'stat_results_fount={found_res}_{ts}.csv')
+    return gb
+
+
+def evaluate_results(file_name):
+    ts = time()
+    df = pd.read_csv(f'./outputs/{file_name}.csv', index_col=0)
+
+    gb = save_results_stats(df, found_res=True)
+    _ = save_results_stats(df, found_res=False)
 
     # TODO - make the plot more nice
     for col in df.columns:
