@@ -28,7 +28,11 @@ class AStarSolver:
                 return 'NOT_FOUND'
 
             if str(board) not in self.history:
-                self.history[str(board)] = f
+                board_str = str(board)
+                if board_str not in self.history:
+                    self.history[board_str] = 1
+                else:
+                    self.history[board_str] += 1
                 next_possible_board_list = board.get_possible_next_board(self.heuristic)
                 for next_board in next_possible_board_list:
                     heapq.heappush(frontier, (next_board.f_value(self.heuristic), next_board))

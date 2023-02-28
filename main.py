@@ -5,6 +5,7 @@ from time import time
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import seaborn as sns
 
 from IDAstar import IDAStarSolver
 from AStar import AStarSolver
@@ -18,7 +19,6 @@ def run_solver(solver, experiment_name):
     if actual_cost == 'NOT_FOUND':
         print(f"Board was not solved after {round(e_time - s_time, 6)} sec")
     nodes_counts = pd.Series(solver.history.values(), index=solver.history.keys())
-    desc = nodes_counts.describe()
     res_dict = {
         'experiment_name': experiment_name,
         'actual_cost': actual_cost,
@@ -26,7 +26,7 @@ def run_solver(solver, experiment_name):
         'expanded_nodes': solver.nodes_expanded,
         'duplicate_visits': nodes_counts[nodes_counts > 1].sum(),
         'count_steps': len(solver.solution),
-        **{f'{percentile}_visits'.title(): val for percentile, val in desc.items()}
+        'count_unique_nodes': len(nodes_counts)
     }
     for k, v in res_dict.items():
         print(k, v, sep=' = ')
@@ -44,36 +44,33 @@ def run_solver_and_save_results(solver, board, seed, heuristic, dir_path, solver
     return df
 
 
-def save_results_stats(all_res_df, found_res=True):
+def save_results_stats(all_res_df, found_res=True, ts=time()):
     if found_res:
         df = all_res_df[all_res_df['actual_cost'] != 'NOT_FOUND']
+        df = df.astype({'actual_cost': int})
     else:
         df = all_res_df[all_res_df['actual_cost'] == 'NOT_FOUND']
     gb = df.groupby('experiment_name')
     mean_per_exp = gb.mean().add_prefix('mean_')
     std_per_exp = gb.std().add_prefix('std_')
-    stat_res = pd.concat([mean_per_exp, std_per_exp], axis=1)
-    stat_res.to_csv(f'stat_results_fount={found_res}_{ts}.csv')
-    return gb
+    count_exp = gb.count().rename(columns={'actual_cost': 'count_exp'})[['count_exp']]
+    stat_res = pd.concat([count_exp, mean_per_exp, std_per_exp], axis=1)
+    stat_res.to_csv(f'stat_results_found={found_res}_{ts}.csv')
+    return df
 
 
 def evaluate_results(file_name):
     ts = time()
     df = pd.read_csv(f'./outputs/{file_name}.csv', index_col=0)
 
-    gb = save_results_stats(df, found_res=True)
-    _ = save_results_stats(df, found_res=False)
+    found_df = save_results_stats(df, found_res=True, ts=ts)
+    _ = save_results_stats(df, found_res=False, ts=ts)
 
-    # TODO - make the plot more nice
     for col in df.columns:
         if col == 'experiment_name':
             continue
-        boxplot_data = []
-        boxplot_label = []
-        for exp_name, data in gb:
-            boxplot_data.append(data[col].values)
-            boxplot_label.append(exp_name)
-        plt.boxplot(boxplot_data, labels=boxplot_label)
+        sns.boxplot(data=found_df, y=col, x='experiment_name')
+        plt.xticks(rotation=10)
         plt.savefig(f'./plots/{col}_boxplot.jpg')
         plt.close()
 
@@ -90,7 +87,8 @@ if __name__ == '__main__':
     }
     results_list = []
 
-    for seed in range(1, number_of_iterations):
+    ## 1. 1-10, 2. 11-81, 3. 80-100
+    for seed in range(80, number_of_iterations):
         print(f'Iteration no. {seed} with seed no. {seed}')
         np.random.seed(seed)
 
