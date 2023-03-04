@@ -3,7 +3,7 @@ import numpy as np
 
 
 class Board():
-    def __init__(self, size=3, heuristic='manhattan'):
+    def __init__(self, size=3):
         self.dim = size
         self.tiles = self.generate_board(size)
         self.goal_board = self.generate_board(size, is_default_goal=True)
